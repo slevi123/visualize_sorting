@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>Sorting Algorithms</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="">
+<link rel="stylesheet" href="index.css">
+<body>
+    <label for="array-size-input">Array size:</label>
+    <input type="number" id="array-size-input" name="array-size" min="3" max="30" value=10>
+    <button id="generate">Generate Random Array</button>
+    <select name="algorithm" id="algo-select">
+        <option value="bubble">Bubble sort</option>
+        <option value="selection" selected>Selection sort</option>
+      </select>
+    <button id="sort-button">Stepping Sort</button>
+    <button id="next-button">Next</button>
+    <select name="speed" id="speed-selector">
+      <option value="30">Super Fast</option>
+      <option value="70">Faster</option>
+      <option value="150">Fast</option>
+      <option value="300" selected>Normal</option>
+      <option value="500">Slow</option>
+      <option value="1000">Slower</option>
+      <option value="2000">Super Slow</option>
+    </select>
+    <button id="autosort-button">Auto-sort</button>
+    <button id="continue-button">Continue</button>
+    <button id="stop-button">Stop</button>
+    <canvas id="visualizerCanvas" width="500" height="500"></canvas>
+
+    <script src="index.js"></script>
+</body>
+</html>
