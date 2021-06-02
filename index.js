@@ -46,7 +46,11 @@ class Visualizer{
     }
 
     onAlgorithmSelect(){
-         this.currentSortStr = document.getElementById("algo-select").value
+        window.clearInterval(this.interval)
+        this.currentSortStr = document.getElementById("algo-select").value
+        this.startSorting(false, true)
+        this.display_colors = {};
+        this.displayArray();
     }
 
     drawRectangle(x, y, w, h, color="green"){
@@ -71,7 +75,7 @@ class Visualizer{
         console.log("ArrayDisplayed")
     }
 
-    startSorting(auto_sort=false){
+    startSorting(auto_sort=false, init=false){
         this.display_colors = {}
 
         switch(this.currentSortStr) {
@@ -92,19 +96,29 @@ class Visualizer{
                 }
                 this.currentSort = this.selectionSort;
                 break;
+                case "insertion":
+                    // code block
+                    this.display_colors[0] = "red"
+                    this.sorting_state = {
+                        i : 1,
+                        j : 0,
+                        key : this.array[1]
+                    }
+                    this.currentSort = this.insertionSort;
+                    break; 
             default:
               // code block
           }
 
         this.paused = false;
 
-
-        this.sorting = true;
-
-        if (auto_sort) this.autoSort()
-        else {this.currentSort()
-            console.log("not auto, manual")
-        };
+        if (!init){
+            this.sorting = true;
+            if (auto_sort) this.autoSort()
+            else {this.currentSort()
+                console.log("not auto, manual")
+            };
+        }
     }
 
     autoSort(){
@@ -125,11 +139,28 @@ class Visualizer{
         console.log("swapped");
     }
 
+    visualizedCopy(to, from){
+        // this.display_colors = {};
+        this.display_colors[to] =  '#02e866'; //'#c7000d';
+        this.display_colors[from] = '#fff7b0';
+
+        this.array[to] = this.array[from];
+        console.log("copied");
+    }
+    visualizedValueGiving(index, value){
+        this.display_colors[index] = '#c7000d';
+        this.array[index] = value;
+    }
+
+    visualizedGetValue(index){
+        this.display_colors[index] = "#050303";
+        return this.array[index];
+    }
+
     addNewInterval(){
         window.clearInterval(this.interval)
         window.setInterval(this.interval = window.setInterval( () => this.currentSort(), this.speed))
     }
-
 
     bubbleSort() {
         console.log("bubble sort")
@@ -206,6 +237,43 @@ class Visualizer{
         }
         if (!this.sorting) {
             window.clearInterval(this.interval);
+            this.displayArray();
+        }
+    }
+
+    insertionSort(){ 
+        this.paused = false;
+        this.sorting = false;
+        while (this.sorting_state.i < this.array_size && !this.paused){
+            this.sorting = true;
+            /* Move elements of arr[0..i-1], that are 
+            greater than key, to one position ahead 
+            of their current position */
+            while (this.sorting_state.j >= 0 && this.array[this.sorting_state.j] > this.sorting_state.key && !this.paused)
+            { 
+                this.visualizedCopy(this.sorting_state.j+1, this.sorting_state.j)
+
+                this.sorting_state.j = this.sorting_state.j - 1; 
+
+                this.paused = true;
+                this.displayArray();
+                console.log(this.sorting_state )
+            } 
+
+            if (!(this.sorting_state.j >= 0 && this.array[this.sorting_state.j] > this.sorting_state.key)){
+                this.visualizedValueGiving(this.sorting_state.j + 1, this.sorting_state.key);
+                this.paused = true;
+                this.displayArray();
+                this.sorting_state.i ++;
+
+                this.sorting_state.key = this.visualizedGetValue(this.sorting_state.i)
+
+                this.sorting_state.j = this.sorting_state.i - 1;
+            } 
+        }
+        if (!this.sorting) {
+            window.clearInterval(this.interval);
+            this.display_colors = {}
             this.displayArray();
         }
     }

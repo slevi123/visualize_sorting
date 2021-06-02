@@ -1,3 +1,8 @@
+body{
+    /* font-family: 'Noto Sans JP', sans-serif; */
+    font-family: 'Baloo Tammudu 2', cursive;
+}
+
 canvas{
     border:1px solid #000000;
     width: "100%";
@@ -6,4 +11,4 @@ canvas{
 
 button {
     margin: 10px;
-}
+}   	
