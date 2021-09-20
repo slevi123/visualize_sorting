@@ -5,8 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Tammudu+2&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="res/css/index.css">
 <body>
+  <h1>Algorithm Timer</h1>
+  <label for="auto-sort">AutoSort: </label>
+  <input type="checkbox" id="auto-sort" checked>
+
+  <button id="start">Start</button>
+  <button id="stop">Stop</button>
+
+  <label for="speed">AutoSort speed: </label>
+  <select id="speed">
+    <option value="70">Super Fast</option>
+    <option value="120">Fast</option>
+    <option value="450">Medium</option>
+    <option value="700">Slow</option>
+    <option value="1000">Super Slow</option>
+  </select>
+  <button id="pause_resume">Pause/Resume</button>
+
+  <button id="step">Step</button>
+
+
     <label for="array-size-input">Array size:</label>
     <input type="number" id="array-size-input" name="array-size" min="3" max="30" value=10>
     <button id="generate">Generate Random Array</button>
@@ -15,8 +35,6 @@
         <option value="selection" selected>Selection sort</option>
         <option value="insertion">Insertion sort</option>
       </select>
-    <button id="sort-button">Stepping Sort</button>
-    <button id="next-button">Next</button>
     <select name="speed" id="speed-selector">
       <option value="30">Super Fast</option>
       <option value="70">Faster</option>
@@ -26,11 +44,8 @@
       <option value="1000">Slower</option>
       <option value="2000">Super Slow</option>
     </select>
-    <button id="autosort-button">Auto-sort</button>
-    <button id="continue-button">Continue</button>
-    <button id="stop-button">Stop</button>
-    <canvas id="visualizerCanvas" width="500" height="500"></canvas>
+    <canvas id="array-canvas" class="responsive-canvas" width="5000" height="2100"></canvas>
 
-    <script src="index.js"></script>
+    <script src="res/js/sorting.js"></script>
 </body>
 </html>
