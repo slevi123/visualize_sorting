@@ -32,7 +32,7 @@ class LesCanvasFillText extends LesCanvasItem{
     constructor(canvas, x, y, _text, {font="30px Arial", color="black"} = {}){
         super(canvas);
         [this.x, this.y, this._text, this.font, this.color] = [x, y, _text, font, color];
-        console.log(color)
+        // console.log(color)
     }
 
     draw(){
@@ -53,7 +53,7 @@ class LesCanvasFillText extends LesCanvasItem{
 
 
 class LesCanvasLine extends LesCanvasItem{
-    constructor(canvas, x1, y1, x2, y2, color="black", width="1"){
+    constructor(canvas, x1, y1, x2, y2, {color="black", width="1"}={}){
         super(canvas);
         [this.x1, this.y1, this.x2, this.y2] = [x1, y1, x2, y2];
         [this.color, this.width] = [color, width];
@@ -70,7 +70,7 @@ class LesCanvasLine extends LesCanvasItem{
 }
 
 class LesCanvasRectangle extends LesCanvasItem{
-    constructor(canvas, x, y, width, height, color="black"){
+    constructor(canvas, x, y, width, height, {color="black"}={}){
         super(canvas);
         this.x = x; this.y = y;
         this.width = width; this.height = height;
@@ -79,7 +79,7 @@ class LesCanvasRectangle extends LesCanvasItem{
 }
 
 class LesCanvasStrokeRectangle extends LesCanvasRectangle{
-    constructor(canvas, x, y, width, height, color="black", stroke_width=1){
+    constructor(canvas, x, y, width, height, {color="black", stroke_width=1}={}){
         super(canvas, x, y, width, height, color)
         this.stroke_width = stroke_width;
     }
@@ -257,28 +257,34 @@ class ArrayDrawing{
         height = value*manager.value_height;
         // console.log("draw valuw:  ", spacing_before, this.padding)
         // console.log("draw value:  ", x1+spacing_before+this.padding, this.item_width, height)
-
+        let color = manager.draw_color;
 
         // drawing value rect
         this.value = 
-            manager.canvas.fillRect(x1, 0, manager.item_width, height);
+            manager.canvas.fillRect(x1, 0, manager.item_width, height, {color: color});
 
         // text
         this.text = 
-            manager.canvas.fillText(x1, height+manager.text_offset, value, {font:"120px Arial"})
+            manager.canvas.fillText(x1+~~(manager.item_width/2), height+manager.text_offset, value, {font:`${manager.font_size}px Arial`, color: color})
+
+        //flag for eliminating double deletes
+        this._drawn = true;
     }
 
     delete(){
-        this.text.delete()
-        this.value.delete()
+        if (this._drawn){
+            this.text.delete()
+            this.value.delete()
+            this._drawn = false;
+        }
     }
 }
 
 
 class ArrayManager extends CanvasManager{
     constructor(canvas,   {array_size=10,
-        spacing: spacing_ratio = 0.4, value_height = 30, min_padding=200,
-        default_cell_color="black", text_offset = 10,
+        spacing_ratio = 0.4, value_height = 30, min_padding=200,
+        default_cell_color="black",
         //   separator_color="black",
     }={}){
         
@@ -287,7 +293,7 @@ class ArrayManager extends CanvasManager{
         
         this.min_padding = min_padding;
         [this.spacing_ratio, this.value_height] = [spacing_ratio, value_height];
-        this.text_offset = text_offset;
+        [this.text_offset, this.font_size] = [100, 110];
         
         this.drawings = [];
         // this.relative_resize()
@@ -296,6 +302,23 @@ class ArrayManager extends CanvasManager{
         this._2d_context = canvas._2d_context;
         // this.calculate_sizes(array_size);
         this.array_size = array_size;
+
+        this._upcoming_colors = []
+        this._draw_color = "green";
+    }
+
+    get draw_color(){
+        if (this._upcoming_colors.length) return this._upcoming_colors.pop();
+        return this._draw_color;
+    }
+
+    set draw_color(new_value){
+        this._draw_color = new_value;
+    }
+
+    enroll_colors(...colors){
+        if (colors) this._upcoming_colors.push(...colors)
+        else this._upcoming_colors = [];
     }
     
     set array_size(new_value){
@@ -311,7 +334,7 @@ class ArrayManager extends CanvasManager{
     }
 
     calculate_sizes(){
-        console.log("calcs:  ", this.canvas.width, this._array_size);
+        // console.log("calcs:  ", this.canvas.width, this._array_size);
         const spacing_units = this.spacing_ratio*(this._array_size-1);
         this.item_width = ~~((this.canvas.width-2*this.min_padding)/(this._array_size+spacing_units));
         this.spacing = ~~(this.spacing_ratio*this.item_width);
@@ -319,8 +342,13 @@ class ArrayManager extends CanvasManager{
         this.padding = ~~((this.canvas.width - content_width)/2);
         // this.canvas.fillRect(0, 600, this.padding, 700, "yellow")
         // this.canvas.fillRect(0, 500, this.min_padding/2, 500, "blue")
-        console.log("calcs:  ", this.spacing, this.item_width, this.padding)
+        // console.log("calcs:  ", this.spacing, this.item_width, this.padding)
         // console.log("calcs:  ", )
+
+        this.font_size = ~~(this.item_width / 1.5);
+        this.text_offset = this.font_size + 10;
+
+        // console.log(this.font_size, this.item_width)
         
         // this.fix_sizes();
     }
@@ -333,9 +361,9 @@ class ArrayManager extends CanvasManager{
     
 }
 class VisualArray{
-    constructor(canvas, minimum_item_width=5){
+    constructor(canvas,{minimum_item_width=5, manager_options={}}={}){
         this.canvas = canvas;
-        this.array_manager = new ArrayManager(canvas, {array_size: 10})
+        this.array_manager = new ArrayManager(canvas, {array_size: 10, ...manager_options},)
 
         this.minimum_item_width = this.minimum_item_width;
 
@@ -345,6 +373,12 @@ class VisualArray{
         this.proxy = new Proxy(this.target, {
             set: (target, prop, new_value) => this.set_item(target, prop, new_value)
         })
+
+        this.target.redraw = (...args) => this.redraw(...args);
+        this.target.recolor = (...args) => this.recolor(...args);
+        this.target.enroll_colors = (...colors) => this.array_manager.enroll_colors(...colors);
+
+
     }
 
     static new(...args){
@@ -352,12 +386,30 @@ class VisualArray{
     }
 
     set_item(target, prop, new_value){
-        if (prop == "length") this.array_manager.array_size = new_value
+        if (prop == "length") {
+            this.target.length = new_value;
+            this.array_manager.array_size = new_value
+            // console.log("length", prop, new_value)
+        }
+        else if (prop == "draw_color"){
+            this.array_manager.draw_color = new_value;
+        }
         else {
             Reflect.set(target, prop, new_value);
             this.array_manager.draw_value(prop, new_value);
+            // console.log("aalllitva", target[prop])
         }
-        console.log("aalllitva", target[prop])
+    }
+    
+    redraw(i){
+        console.log("redraw", i)
+        this.array_manager.draw_value(i, this.target[i]);
+    }
+
+    recolor(i, color){
+
+        this.array_manager.enroll_colors(color);
+        this.array_manager.draw_value(i, this.target[i]);
     }
 
     get maximum_item_count(){
@@ -501,46 +553,70 @@ class AlgorithmPauser{
 //     document.getElementById("step").addEventListener("click", () => at.step())
 // }
 function generate_array(visual_array, array_size_dom){
+    
     size = parseInt(array_size_dom.value);
     visual_array.length = size;
     f_min = 20;
-    f_max = 50;
+    f_max = 850;
     for (let i=0; i<size; i++){
         visual_array[i] = ~~(Math.random() * (f_max+1)) + f_min
     }
+    
+    // visual_array.recolor(5, "yellow");
 }
 
 
 window.onload = function(){
     algorithms = {
-        "bubble sort": async function(){ 
+        "bubble sort": async function(){
             // console.log(this)
             let i, j,
-                arr = this.state.array,
-                n = arr.length;
-            for (i = 0; i < n-1; i++)     
+            arr = this.state.array,
+            n = arr.length;
+                        
+            for (i = 0; i < n-1 && this.started; i++){    
                 // Last i elements are already in place 
-                for (j = 0; j < n-i-1 && this.started; j++) 
+                // console.log("ciklus")
+                for (j = 0; j < n-i-1 && this.started; j++){
+                    arr.recolor(j, "#0b3be6");
+                    arr.recolor(j+1, "#0390fc");
+                    await this.next();
                     if (arr[j] > arr[j+1]){
+                        // console.log("csere")
+                        arr.enroll_colors("#db0bc3", "#db0d1e");
                         [ arr[j], arr[j+1] ] = [  arr[j+1], arr[j] ]; 
-                        await this.next();
-                    }
+                        // console.log(arr)
+                    } else arr.recolor(j, "#c4edbe");    // halvanysarga "#f2dd7e");
+                    await this.next();
+                }
+                arr.recolor(n-i-1, "#1bde0d");
+            }
+            if (this.started) arr.recolor(0, "#1bde0d");
+            
         } 
     }
     console.log("betoltve")
-
+    
     let canvas = new LesCanvas("array-canvas");
+    
+    let visual_array = VisualArray.new(canvas, {
+        manager_options: {value_height: 2}
+    });
 
-    let visual_array = VisualArray.new(canvas);
+    visual_array.draw_color = "#f2d40f";
 
+    
     let array_size_dom = document.getElementById("array-size-input"),
-        algorithm_pauser = new AlgorithmPauser();
-
+    algorithm_pauser = new AlgorithmPauser();
+    
     algorithm_pauser.algorithm = algorithms["bubble sort"]
     algorithm_pauser.state = {array: visual_array}
-
-    document.getElementById("generate").addEventListener("click", ()=>generate_array(visual_array, array_size_dom) )
-
+    
+    document.getElementById("generate").addEventListener("click", ()=>{
+        algorithm_pauser.stop();
+        generate_array(visual_array, array_size_dom); 
+    })
+    
     document.getElementById("start").addEventListener("click", ()=>algorithm_pauser.start() )
     document.getElementById("pause_resume").addEventListener("click", ()=>algorithm_pauser.pause_resume())
     document.getElementById("stop").addEventListener("click", ()=>algorithm_pauser.stop())
